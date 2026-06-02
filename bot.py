@@ -130,6 +130,8 @@ def _build_zenmoney_txn(
     comment = parsed.get("comment", "")
     txn_date = parsed.get("date", date.today().isoformat())
 
+    to_account_title = None
+
     if txn_type == "income":
         income = amount
         outcome = 0.0
@@ -138,12 +140,16 @@ def _build_zenmoney_txn(
         income_instrument = instrument
         outcome_instrument = instrument
     elif txn_type == "transfer":
-        # For transfer we need two accounts; keep simple: same account (user can edit)
+        dst_account = _find_account(parsed.get("to_account"), state)
+        dst_acc_id = dst_account.get("id", "")
+        dst_instrument = dst_account.get("instrument", 0)
+        to_account_title = dst_account.get("title", "")
+
         income = amount
         outcome = amount
-        income_account = acc_id
+        income_account = dst_acc_id
         outcome_account = acc_id
-        income_instrument = instrument
+        income_instrument = dst_instrument
         outcome_instrument = instrument
     else:  # expense
         income = 0.0
@@ -187,6 +193,7 @@ def _build_zenmoney_txn(
             "type": txn_type,
             "amount": amount,
             "account_title": account.get("title", ""),
+            "to_account_title": to_account_title,
             "tag_title": None,  # filled by caller
             "instrument": instrument,
         },
@@ -201,6 +208,7 @@ def _format_confirmation(zn_txns: list[dict]) -> str:
         txn_type = meta.get("type", "expense")
         amount = meta.get("amount", txn.get("outcome") or txn.get("income", 0))
         account_title = meta.get("account_title", "")
+        to_account_title = meta.get("to_account_title")
         tag_title = meta.get("tag_title") or "без категорії"
         symbol = _currency_symbol(meta.get("instrument", 0))
         comment = txn.get("comment", "")
@@ -208,7 +216,12 @@ def _format_confirmation(zn_txns: list[dict]) -> str:
         emoji = TYPE_EMOJI.get(txn_type, "💳")
 
         label = payee or comment or "транзакція"
-        lines.append(f"{i}. {emoji} {label} — {amount:,.0f} {symbol} ({account_title})")
+        if txn_type == "transfer" and to_account_title:
+            acc_display = f"{account_title} ➡️ {to_account_title}"
+        else:
+            acc_display = account_title
+
+        lines.append(f"{i}. {emoji} {label} — {amount:,.0f} {symbol} ({acc_display})")
         lines.append(f"   📁 {tag_title}\n")
 
     lines.append("Зберегти всі?")

@@ -24,7 +24,8 @@ Parse the user message into a list of transactions.
 Each transaction must have:
 - amount: float (positive number)
 - type: "expense" or "income" or "transfer"
-- account: string (account name if mentioned, or null for default)
+- account: string (account name if mentioned, or null for default. For transfers, this is the source account, i.e., where money is sent FROM)
+- to_account: string (destination account name if type is "transfer" and destination account is mentioned, or null)
 - category: string (one of the available categories below, or null if unclear)
 - payee: string (merchant/shop name, or null)
 - comment: string (short description in Ukrainian)
@@ -42,7 +43,10 @@ Rules:
 - If user mentions a shop/place name, put it in "payee"
 - "comment" should be a short human-readable description in Ukrainian
 - For salary/income messages set type="income"
-- For transfers between accounts set type="transfer"
+- For transfers between accounts set type="transfer", and extract both the source "account" and the destination "to_account".
+  Examples: 
+  "переказ 5000 з mono black на cash" → type="transfer", amount=5000, account="mono black", to_account="cash"
+  "з mono white на privat 1000" → type="transfer", amount=1000, account="mono white", to_account="privat"
 - Always return a JSON array, even for a single transaction
 - Parse dates flexibly: "вчора"=yesterday, "1 червня"/"1 июня"=June 1, "позавчора"=day before yesterday
 - If amount is ambiguous, use the most reasonable interpretation
@@ -51,7 +55,8 @@ Return ONLY valid JSON array. No markdown code fences. No explanation.
 Example:
 [
   {{"amount": 85, "type": "expense", "account": null, "category": "кофе", "payee": "кав'ярня", "comment": "кава", "date": "{today}"}},
-  {{"amount": 340, "type": "expense", "account": "готівка", "category": "продукты", "payee": "АТБ", "comment": "продукти АТБ", "date": "{today}"}}
+  {{"amount": 340, "type": "expense", "account": "готівка", "category": "продукты", "payee": "АТБ", "comment": "продукти АТБ", "date": "{today}"}},
+  {{"amount": 5000, "type": "transfer", "account": "mono black", "to_account": "cash", "category": null, "payee": null, "comment": "переказ", "date": "{today}"}}
 ]
 """
 
@@ -122,6 +127,7 @@ class TransactionParser:
                 "amount": float(item.get("amount", 0)),
                 "type": item.get("type", "expense"),
                 "account": item.get("account"),
+                "to_account": item.get("to_account"),
                 "category": item.get("category"),
                 "payee": item.get("payee"),
                 "comment": item.get("comment", ""),
