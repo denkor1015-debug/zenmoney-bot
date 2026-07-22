@@ -2,3 +2,4 @@ aiogram
 httpx
 anthropic
 python-dotenv
+aiohttp

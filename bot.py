@@ -501,14 +501,38 @@ async def callback_confirm_cancel(callback: CallbackQuery) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Entry point
+# Entry point & Render health check
 # ---------------------------------------------------------------------------
+
+async def start_health_server() -> None:
+    """Start a dummy HTTP server on PORT for Render health check."""
+    from aiohttp import web
+    port = int(os.getenv("PORT", "10000"))
+
+    async def health_handler(request):
+        return web.Response(text="ZenMoney Bot is healthy 🤖")
+
+    app = web.Application()
+    app.router.add_get("/", health_handler)
+    app.router.add_get("/healthz", health_handler)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", port)
+    await site.start()
+    logger.info("Started health check server on port %d", port)
+
 
 async def main() -> None:
     if not BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set in .env")
     if not ALLOWED_USER_ID:
         raise RuntimeError("TELEGRAM_USER_ID is not set in .env")
+
+    # Start dummy HTTP health check server for Render Web Service
+    try:
+        await start_health_server()
+    except Exception as exc:
+        logger.warning("Could not start health server: %s", exc)
 
     logger.info("Starting ZenMoney bot (allowed user_id=%d)", ALLOWED_USER_ID)
     await dp.start_polling(bot)
@@ -517,3 +541,4 @@ async def main() -> None:
 if __name__ == "__main__":
     import asyncio
     asyncio.run(main())
+
