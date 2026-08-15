@@ -5,6 +5,7 @@ Handlers: /start, /refresh, /accounts, text messages
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -522,6 +523,38 @@ async def start_health_server() -> None:
     logger.info("Started health check server on port %d", port)
 
 
+async def sync_state_on_startup() -> None:
+    """
+    Refill the ZenMoney cache at boot.
+
+    Render's filesystem is ephemeral, so state.json is gone after every deploy
+    and every wake from spin-down. Without it handle_transaction() answers
+    "спочатку виконай /start" and drops the message, which means a restart used
+    to cost a manual /start before anything could be written again.
+
+    Failure here is not fatal: /start still syncs on demand, and ZenMoney being
+    unreachable at boot must not keep the bot from starting at all.
+    """
+    if load_state().get("accounts"):
+        return
+
+    try:
+        state = await asyncio.wait_for(
+            ZenMoneyClient().fetch_initial_data(), timeout=60,
+        )
+    except Exception as exc:
+        logger.warning(
+            "Startup sync failed, waiting for /start instead: %s: %s",
+            type(exc).__name__, exc,
+        )
+        return
+
+    logger.info(
+        "Startup sync done: %d accounts, %d tags",
+        len(state.get("accounts", {})), len(state.get("tags", {})),
+    )
+
+
 async def main() -> None:
     if not BOT_TOKEN:
         raise RuntimeError("TELEGRAM_BOT_TOKEN is not set in .env")
@@ -534,11 +567,12 @@ async def main() -> None:
     except Exception as exc:
         logger.warning("Could not start health server: %s", exc)
 
+    await sync_state_on_startup()
+
     logger.info("Starting ZenMoney bot (allowed user_id=%d)", ALLOWED_USER_ID)
     await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())
 
