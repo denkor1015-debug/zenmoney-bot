@@ -124,7 +124,7 @@ class TransactionParser:
             if not isinstance(item, dict):
                 continue
             txn = {
-                "amount": float(item.get("amount", 0)),
+                "amount": float(item.get("amount") or 0),
                 "type": item.get("type", "expense"),
                 "account": item.get("account"),
                 "to_account": item.get("to_account"),
