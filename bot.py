@@ -201,6 +201,18 @@ def _build_zenmoney_txn(
     }
 
 
+def _format_amount(amount: float) -> str:
+    """
+    Render an amount without inventing or hiding precision.
+
+    Kopiykas are shown only when there are any: 85.87 stays 85.87, while a
+    round 1300 does not become 1300.00. Formatting used to round to whole
+    hryvnias, so a confirmation could read 2 ₴ for a 1.84 ₴ transaction that
+    was in fact saved to ZenMoney as 1.84.
+    """
+    return f"{amount:,.2f}" if amount % 1 else f"{amount:,.0f}"
+
+
 def _format_confirmation(zn_txns: list[dict]) -> str:
     """Build human-readable confirmation message."""
     lines = [f"📋 Розпізнано {len(zn_txns)} транзакц{'ію' if len(zn_txns) == 1 else 'ії' if len(zn_txns) < 5 else 'ій'}:\n"]
@@ -222,7 +234,7 @@ def _format_confirmation(zn_txns: list[dict]) -> str:
         else:
             acc_display = account_title
 
-        lines.append(f"{i}. {emoji} {label} — {amount:,.0f} {symbol} ({acc_display})")
+        lines.append(f"{i}. {emoji} {label} — {_format_amount(amount)} {symbol} ({acc_display})")
         lines.append(f"   📁 {tag_title}\n")
 
     lines.append("Зберегти всі?")
