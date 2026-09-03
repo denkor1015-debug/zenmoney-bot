@@ -1,8 +1,9 @@
 .env
 state.json
+state.json.tmp
+CONTEXT_FOR_AI.json
 Картки/
 import_out/
-state.json.tmp
 __pycache__/
 *.pyc
 .DS_Store

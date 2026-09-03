@@ -33,7 +33,7 @@ import uuid
 from datetime import date, timedelta
 from pathlib import Path
 
-BASE = Path(__file__).parent
+BASE = Path(__file__).parent.parent  # script lives in tools/, data dirs sit at repo root
 CARDS = BASE / "Картки"
 OWN = CARDS / "Особисті"
 AD = CARDS / "Рекламні "

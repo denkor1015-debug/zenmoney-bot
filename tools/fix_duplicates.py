@@ -16,12 +16,15 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import sys
 import time
 from pathlib import Path
 
-from zenmoney import ZenMoneyClient
+BASE = Path(__file__).parent.parent  # script lives in tools/, data dirs sit at repo root
+sys.path.insert(0, str(BASE))
 
-BASE = Path(__file__).parent
+from zenmoney import ZenMoneyClient  # noqa: E402
+
 OUT = BASE / "import_out"
 TRIAL_COUNT = 5
 
