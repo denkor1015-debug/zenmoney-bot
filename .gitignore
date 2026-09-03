@@ -6,4 +6,5 @@ CONTEXT_FOR_AI.json
 import_out/
 __pycache__/
 *.pyc
+*.mov
 .DS_Store

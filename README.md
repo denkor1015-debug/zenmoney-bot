@@ -8,12 +8,9 @@ No forms, no categories to pick, no app to open. You type how you'd tell a frien
 spent; the bot figures out the amount, account, category, and merchant, shows you a
 confirmation card, and saves it.
 
-<!--
-  DEMO: drop a short screen recording here to "show, don't tell".
-  Record yourself typing a message and tapping ✅, save it as docs/demo.gif, then
-  the line below will render it. (Delete this comment once the GIF is in place.)
--->
-![Demo](docs/demo.gif)
+<p align="center">
+  <img src="docs/demo.gif" alt="Demo: typing a message and saving it to ZenMoney" width="420">
+</p>
 
 ---
 
